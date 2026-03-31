@@ -1,0 +1,19 @@
+{
+    "name": "${project_name}-${service_name}",
+    "image": "${ecr_url}/${project_name}/${service_name}:${stage}",
+    "cpu": 256,
+    "memory": 512,
+    "essential": true,
+    "portMappings": [
+        {
+            "containerPort": "${container_port}",
+            "hostPort": "${container_port}"
+        }
+    ],
+    "environment": [
+        {
+            "name": "CONTAINER_PORT",
+            "value": "${container_port}"
+        }
+    ]
+}
