@@ -24,7 +24,7 @@ variable "stage" {
   description = "The stage name"
 }
 
-variable "service_name" {
+variable "service_names" {
   type        = list(string)
   description = "The list of service names"
 }
@@ -65,10 +65,10 @@ variable "assign_public_ip" {
   default = false
 }
 
-variable "container_port" {
+variable "container_ports" {
   type = map(number)
   default = {
-    "apiservice" = 80
+    apiservice = 80
   }
 }
 

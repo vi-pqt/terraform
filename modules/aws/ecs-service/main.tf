@@ -6,21 +6,6 @@ locals {
   }
 }
 
-data "template_file" "taskdef_template" {
-  count_service_name   = length(var.service_name)
-  count_ecr_url        = length(var.ecr_url)
-  count_container_port = length(var.container_port)
-  template             = file("${path.module}/task_definition/taskdef_template.json")
-
-  vars = {
-    project_name   = var.project_name
-    stage          = var.stage
-    ecr_url        = var.ecr_url
-    service_name   = var.service_name
-    container_port = var.container_port
-  }
-}
-
 #######################
 # ECS Service
 #######################
@@ -54,6 +39,7 @@ resource "aws_ecs_service" "name" {
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.stage}-${var.service_names[count.index]}"
+    Tier = "Private"
   })
 }
 
@@ -67,9 +53,30 @@ resource "aws_ecs_task_definition" "name" {
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.task_role_arn
 
-  container_definitions = data.template_file.taskdef_template[count.index].rendered
+  container_definitions = jsonencode([
+    {
+      "name" : "${var.project_name}-${var.service_names[count.index]}",
+      "image" : "${var.ecr_url[count.index]}/${var.project_name}/${var.service_names[count.index]}:${var.stage}",
+      "cpu" : 256,
+      "memory" : 512,
+      "essential" : true,
+      "portMappings" : [
+        {
+          "containerPort" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? values(var.container_ports)[count.index] : 80,
+          "hostPort" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? values(var.container_ports)[count.index] : 80
+        }
+      ],
+      "environment" : [
+        {
+          "name" : "CONTAINER_PORT",
+          "value" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? tostring(values(var.container_ports)[count.index]) : "80"
+        }
+      ]
+    }
+  ])
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.stage}-${var.service_names[count.index]}-taskdef"
+    Tier = "Private"
   })
 }
