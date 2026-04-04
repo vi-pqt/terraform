@@ -46,7 +46,7 @@ variable "short_names" {
   default     = []
 }
 
-variable "service_name" {
+variable "service_names" {
   description = "List of service names"
   type        = list(string)
   default     = []
@@ -57,7 +57,7 @@ variable "aws_account_id" {
   type        = string
 }
 
-variable "container_port" {
+variable "container_ports" {
   description = "Map of container ports"
   type        = map(number)
   default     = {}

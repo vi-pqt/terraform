@@ -11,7 +11,7 @@ private_subnets    = ["10.0.48.0/24", "10.0.64.0/24", "10.0.80.0/24"]
 data_subnets       = ["10.0.96.0/24", "10.0.112.0/24", "10.0.128.0/24"]
 availability_zones = ["ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"]
 
-service_name = [
+service_names = [
   "apiservice",
   "adservice",
   "cartservicev2",
@@ -44,18 +44,18 @@ short_names = [
   "shoppingassistantsvc"
 ]
 
-container_port = {
-  "apiservice"               = 8090
-  "adservice"                = 9555
-  "cartservicev2"            = 7070
-  "checkoutservice"          = 5050
-  "currencyservice"          = 7000
-  "emailservice"             = 8080
-  "frontend"                 = 8080
-  "paymentservice"           = 50051
-  "productcatalogservice"    = 3550
-  "reactfrontend"            = 3001
-  "recommendationservice"    = 8080
-  "shippingservice"          = 50051
-  "shoppingassistantservice" = 80
+container_ports = {
+  apiservice               = 8090
+  adservice                = 9555
+  cartservicev2            = 7070
+  checkoutservice          = 5050
+  currencyservice          = 7000
+  emailservice             = 8080
+  frontend                 = 8080
+  paymentservice           = 50051
+  productcatalogservice    = 3550
+  reactfrontend            = 3001
+  recommendationservice    = 8080
+  shippingservice          = 50051
+  shoppingassistantservice = 80
 }

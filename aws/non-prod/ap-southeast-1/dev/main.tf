@@ -62,9 +62,9 @@ module "ecs-service" {
   assign_public_ip = false
 
   # List of service names
-  service_name = var.service_name
+  service_names = var.service_names
 
   # Map of container ports
-  container_port = var.container_port
+  container_ports = var.container_ports
 }
 
