@@ -38,3 +38,9 @@ variable "az" {
   type        = list(string)
   default     = ["1a", "1b", "1c"]
 }
+
+variable "is_single_nat_gw" {
+  description = "Single NAT Gateway"
+  type        = bool
+  default     = false
+}

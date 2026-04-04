@@ -44,12 +44,14 @@ resource "aws_internet_gateway" "igw_main" {
 # Nat Gateway
 #######################
 resource "aws_eip" "nat_eip" {
+  count  = var.is_single_nat_gw ? 1 : 0
   domain = "vpc"
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.private_subnets[0].id
+  count         = var.is_single_nat_gw ? 1 : 0
+  allocation_id = var.is_single_nat_gw ? aws_eip.nat_eip[0].id : 0
+  subnet_id     = var.is_single_nat_gw ? aws_subnet.private_subnets[0].id : 0
 
   tags = merge(
     local.common_tags,
@@ -176,8 +178,9 @@ resource "aws_route" "igw_public_route" {
 }
 
 resource "aws_route" "nat_private_route" {
+  count                  = var.is_single_nat_gw ? 1 : 0
   route_table_id         = aws_route_table.private_route_table.id
-  nat_gateway_id         = aws_nat_gateway.nat_gw.id
+  nat_gateway_id         = var.is_single_nat_gw ? aws_nat_gateway.nat_gw[0].id : 0
   destination_cidr_block = "0.0.0.0/0"
 }
 
@@ -276,11 +279,10 @@ resource "aws_vpc_security_group_egress_rule" "alb_sg_egress" {
   description       = "Allow all outbound traffic for ALB"
   security_group_id = aws_security_group.alb_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
+  referenced_security_group_id = aws_security_group.private_sg.id
   from_port                    = 8080
   to_port                      = 8080
   ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.private_sg.id
 }
 
 # Private SG
@@ -306,44 +308,40 @@ resource "aws_vpc_security_group_ingress_rule" "private_sg_ingress_alb" {
   description       = "Allow all inbound traffic for private subnets"
   security_group_id = aws_security_group.private_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
+  referenced_security_group_id = aws_security_group.alb_sg.id
   from_port                    = 8080
   to_port                      = 8080
   ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.alb_sg.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_sg_egress_db" {
   description       = "Allow all outbound traffic for private subnets"
   security_group_id = aws_security_group.private_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
+  referenced_security_group_id = aws_security_group.data_sg.id
   from_port                    = 3306
   to_port                      = 3306
   ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.data_sg.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_sg_egress_cache" {
   description       = "Allow all outbound traffic for private subnets"
   security_group_id = aws_security_group.private_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
+  referenced_security_group_id = aws_security_group.data_sg.id
   from_port                    = 6379
   to_port                      = 6379
   ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.data_sg.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "private_sg_egress_https" {
   description       = "Allow HTTPS outbound traffic for private subnets"
   security_group_id = aws_security_group.private_sg.id
 
-  cidr_ipv4                    = "0.0.0.0/0"
-  from_port                    = 443
-  to_port                      = 443
-  ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.alb_sg.id
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 443
+  to_port     = 443
+  ip_protocol = "tcp"
 }
 
 # Data SG
@@ -369,22 +367,20 @@ resource "aws_vpc_security_group_ingress_rule" "data_sg_ingress_db" {
   description       = "Allow all inbound traffic for data subnets"
   security_group_id = aws_security_group.data_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
-  from_port                    = 5432
-  to_port                      = 5432
-  ip_protocol                  = "tcp"
   referenced_security_group_id = aws_security_group.private_sg.id
+  from_port                    = 3306
+  to_port                      = 3306
+  ip_protocol                  = "tcp"
 }
 
 resource "aws_vpc_security_group_egress_rule" "data_sg_ingress_cache" {
   description       = "Allow all outbound traffic for data subnets"
   security_group_id = aws_security_group.data_sg.id
 
-  cidr_ipv4                    = var.vpc_cidr_block
+  referenced_security_group_id = aws_security_group.private_sg.id
   from_port                    = 6379
   to_port                      = 6379
   ip_protocol                  = "tcp"
-  referenced_security_group_id = aws_security_group.private_sg.id
 }
 
 # Third Party SG
