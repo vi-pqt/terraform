@@ -24,8 +24,8 @@ variable "stage" {
   description = "The stage name"
 }
 
-variable "service_names" {
-  type        = list(string)
+variable "service_name" {
+  type        = string
   description = "The list of service names"
 }
 
@@ -75,4 +75,9 @@ variable "container_ports" {
 variable "ecr_url" {
   type        = list(string)
   description = "The URL of the ECR"
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
 }

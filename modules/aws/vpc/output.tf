@@ -25,7 +25,12 @@ output "public_sg" {
 
 output "private_sg" {
   description = "Private security groups"
-  value       = aws_security_group.private_sg[*].id
+  value       = aws_security_group.private_sg.id
+}
+
+output "alb_sg" {
+  description = "ALB security groups"
+  value       = aws_security_group.alb_sg.id
 }
 
 output "data_sg" {

@@ -2,7 +2,7 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Allow-ECR-And-CloudWatch-Permissions",
+            "Sid": "AllowECRAndCloudWatchPermissions",
             "Effect": "Allow",
             "Action": [
                 "ecr:GetAuthorizationToken",

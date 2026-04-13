@@ -33,14 +33,13 @@ variable "stage" {
   type        = string
 }
 
-variable "az" {
-  description = "Availability zones"
-  type        = list(string)
-  default     = ["1a", "1b", "1c"]
-}
-
 variable "is_single_nat_gw" {
   description = "Single NAT Gateway"
   type        = bool
   default     = false
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
 }

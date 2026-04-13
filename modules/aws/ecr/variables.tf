@@ -13,3 +13,14 @@ variable "short_names" {
   type        = list(string)
   default     = []
 }
+
+variable "force_delete" {
+  description = "Force delete ECR repositories"
+  type        = bool
+  default     = false
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+}

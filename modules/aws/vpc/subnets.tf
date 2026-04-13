@@ -10,9 +10,9 @@ resource "aws_subnet" "public_subnets" {
   map_public_ip_on_launch = true
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
-      Name = "${var.project_name}-${var.stage}-public-${element(var.az, count.index)}"
+      Name = "${var.project_name}-${var.stage}-public-${substr(var.availability_zones[count.index], -2, 2)}"
     }
   )
 }
@@ -26,9 +26,9 @@ resource "aws_subnet" "private_subnets" {
   map_public_ip_on_launch = false
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
-      Name = "${var.project_name}-${var.stage}-private-${element(var.az, count.index)}"
+      Name = "${var.project_name}-${var.stage}-private-${substr(var.availability_zones[count.index], -2, 2)}"
     }
   )
 }
@@ -42,9 +42,9 @@ resource "aws_subnet" "data_subnets" {
   map_public_ip_on_launch = false
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
-      Name = "${var.project_name}-${var.stage}-data-${element(var.az, count.index)}"
+      Name = "${var.project_name}-${var.stage}-data-${substr(var.availability_zones[count.index], -2, 2)}"
     }
   )
 }

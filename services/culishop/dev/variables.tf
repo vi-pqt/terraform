@@ -67,3 +67,30 @@ variable "state_bucket_name" {
   description = "State bucket name"
   type        = string
 }
+
+variable "load_balancer_type" {
+  type        = string
+  description = "Load balancer type"
+
+  validation {
+    condition     = contains(["application", "network"], var.load_balancer_type)
+    error_message = "Load balancer type must be application or network"
+  }
+}
+
+variable "target_groups" {
+  description = "Map of target groups"
+  type = map(object({
+    port                 = number
+    health_check_path    = string
+    priority             = number
+    path_patterns        = list(string)
+    health_check_matcher = string
+  }))
+  default = {}
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+}

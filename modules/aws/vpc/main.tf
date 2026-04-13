@@ -1,19 +1,10 @@
+##############################################
 # VPC Module
 # main.tf contains VPC, Internet Gateway, Nat Gateway
 # subnets.tf contains Subnets
-# security_groups.tf contains Security Groups
-# routes.tf contains Routes
-
-#######################
-# Local
-#######################
-locals {
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.stage
-    ManagedBy   = "terraform"
-  }
-}
+# security_groups.tf contains Security Groups, Security Group Rules
+# routes.tf contains Route Tables, Routes
+##############################################
 
 #######################
 # VPC
@@ -24,7 +15,7 @@ resource "aws_vpc" "vpc_main" {
   enable_dns_support   = true
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-vpc"
     }
@@ -39,7 +30,7 @@ resource "aws_internet_gateway" "igw_main" {
   vpc_id = aws_vpc.vpc_main.id
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-igw"
     }
@@ -60,7 +51,7 @@ resource "aws_nat_gateway" "nat_gw" {
   subnet_id     = var.is_single_nat_gw ? aws_subnet.public_subnets[0].id : 0
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-natgw"
     }

@@ -17,3 +17,8 @@ variable "aws_account_id" {
   description = "AWS account ID"
   type        = string
 }
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+}

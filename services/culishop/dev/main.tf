@@ -1,27 +1,5 @@
-data "terraform_remote_state" "ecr" {
-  backend = "s3"
-  config = {
-    bucket  = var.state_bucket_name
-    key     = "ecr/terraform.tfstate"
-    region  = var.region
-    profile = var.project_name
-  }
-}
-
-#######################
-# VPC
-#######################
-module "vpc" {
-  source = "../../../../modules/aws/vpc"
-
-  project_name = var.project_name
-  stage        = var.stage
-
-  vpc_cidr_block     = var.vpc_cidr_block
-  public_subnets     = var.public_subnets
-  private_subnets    = var.private_subnets
-  data_subnets       = var.data_subnets
-  availability_zones = var.availability_zones
+locals {
+  path_module = "../../../../modules/aws"
 }
 
 #######################
@@ -35,6 +13,8 @@ module "iam" {
 
   aws_account_id = var.aws_account_id
   region         = var.region
+
+  common_tags = var.common_tags
 }
 
 #######################
@@ -45,6 +25,8 @@ module "ecs-cluster" {
 
   project_name = var.project_name
   stage        = var.stage
+
+  common_tags = var.common_tags
 }
 
 module "ecs-service" {
@@ -58,7 +40,7 @@ module "ecs-service" {
   ecs_cluster_id   = module.ecs-cluster.ecs_cluster_id
   private_subnets  = module.vpc.private_subnets
   private_sg       = module.vpc.private_sg
-  ecr_url          = data.terraform_remote_state.ecr.outputs.ecr_repository_url
+  ecr_url          = module.ecr.ecr_repository_url
   assign_public_ip = false
 
   # List of service names
@@ -67,4 +49,5 @@ module "ecs-service" {
   # Map of container ports
   container_ports = var.container_ports
 }
+
 

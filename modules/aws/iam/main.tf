@@ -8,12 +8,6 @@ locals {
   })
 
   ecs_task_execution_role_policy = file("${path.module}/policy/ecs-task-execution-policy.json")
-
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.stage
-    ManagedBy   = "terraform"
-  }
 }
 
 #######################
@@ -24,7 +18,7 @@ resource "aws_iam_role" "ecs_task_role" {
 
   assume_role_policy = local.ecs_trust_policy
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-${var.stage}-ecs-task-role"
   })
 }
@@ -34,7 +28,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 
   assume_role_policy = local.ecs_trust_policy
 
-  tags = merge(local.common_tags, {
+  tags = merge(var.common_tags, {
     Name = "${var.project_name}-${var.stage}-ecs-task-execution-role"
   })
 }

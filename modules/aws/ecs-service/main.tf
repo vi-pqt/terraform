@@ -1,22 +1,14 @@
-locals {
-  common_tags = {
-    Project   = var.project_name
-    Stage     = var.stage
-    ManagedBy = "terraform"
-  }
-}
-
 #######################
 # ECS Service
 #######################
-resource "aws_ecs_service" "name" {
-  count = length(var.service_names)
-  name  = "${var.project_name}-${var.service_names[count.index]}"
+resource "aws_ecs_service" "ecs_services" {
+  name = "${var.project_name}-${var.service_name}"
 
-  cluster         = var.ecs_cluster_id
-  task_definition = aws_ecs_task_definition.name[count.index].arn
-  desired_count   = var.desired_count
-  iam_role        = var.task_role_arn
+  cluster                           = var.ecs_cluster_id
+  health_check_grace_period_seconds = 90
+  launch_type                       = "FARGATE"
+  task_definition                   = aws_ecs_task_definition.ecs_taskdef.arn
+  desired_count                     = var.desired_count
 
   network_configuration {
     subnets          = var.private_subnets
@@ -34,18 +26,21 @@ resource "aws_ecs_service" "name" {
   }
 
   lifecycle {
-    ignore_changes = [desired_count]
+    ignore_changes = [
+      desired_count,
+      task_definition,
+      health_check_grace_period_seconds
+    ]
   }
 
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.stage}-${var.service_names[count.index]}"
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.stage}-${var.service_name}"
     Tier = "Private"
   })
 }
 
-resource "aws_ecs_task_definition" "name" {
-  count                    = length(var.service_names)
-  family                   = "${var.project_name}-${var.stage}-${var.service_names[count.index]}"
+resource "aws_ecs_task_definition" "ecs_taskdef" {
+  family                   = "${var.project_name}-${var.service_name}"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = "256"
@@ -55,28 +50,28 @@ resource "aws_ecs_task_definition" "name" {
 
   container_definitions = jsonencode([
     {
-      "name" : "${var.project_name}-${var.service_names[count.index]}",
-      "image" : "${var.ecr_url[count.index]}/${var.project_name}/${var.service_names[count.index]}:${var.stage}",
+      "name" : "${var.project_name}-${var.service_name}",
+      "image" : "${var.ecr_url}/${var.project_name}/${var.service_name}:${var.stage}",
       "cpu" : 256,
       "memory" : 512,
       "essential" : true,
       "portMappings" : [
         {
-          "containerPort" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? values(var.container_ports)[count.index] : 80,
-          "hostPort" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? values(var.container_ports)[count.index] : 80
+          "containerPort" : keys(var.container_ports) == var.service_name ? values(var.container_ports) : 80,
+          "hostPort" : keys(var.container_ports) == var.service_name ? values(var.container_ports) : 80
         }
       ],
       "environment" : [
         {
           "name" : "CONTAINER_PORT",
-          "value" : keys(var.container_ports)[count.index] == var.service_names[count.index] ? tostring(values(var.container_ports)[count.index]) : "80"
+          "value" : keys(var.container_ports) == var.service_name ? tostring(values(var.container_ports)) : "80"
         }
       ]
     }
   ])
 
-  tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.stage}-${var.service_names[count.index]}-taskdef"
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.stage}-${var.service_name}-taskdef"
     Tier = "Private"
   })
 }

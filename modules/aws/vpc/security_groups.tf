@@ -12,7 +12,7 @@ resource "aws_security_group" "public_sg" {
   }
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-sg-public"
       Tier = "Public"
@@ -31,7 +31,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-sg-alb"
       Tier = "Public"
@@ -80,7 +80,7 @@ resource "aws_security_group" "private_sg" {
   }
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-sg-private"
       Tier = "Private"
@@ -139,7 +139,7 @@ resource "aws_security_group" "data_sg" {
   }
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-sg-data"
       Tier = "Data"
@@ -178,7 +178,7 @@ resource "aws_security_group" "third_party_sg" {
   }
 
   tags = merge(
-    local.common_tags,
+    var.common_tags,
     {
       Name = "${var.project_name}-${var.stage}-sg-third-party"
       Tier = "ThirdParty"

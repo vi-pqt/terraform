@@ -1,15 +1,4 @@
 #######################
-# Local
-#######################
-locals {
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.stage
-    ManagedBy   = "terraform"
-  }
-}
-
-#######################
 # ECR Repository
 #######################
 resource "aws_ecr_repository" "ecr_repo" {
@@ -17,17 +6,16 @@ resource "aws_ecr_repository" "ecr_repo" {
   name  = "${var.project_name}-${var.short_names[count.index]}"
 
   image_tag_mutability = "IMMUTABLE"
+  force_delete         = var.force_delete
 
   image_scanning_configuration {
     scan_on_push = true
   }
 
-  tags = merge(
-    local.common_tags,
-    {
-      Name = "${var.project_name}-${var.short_names[count.index]}-ecr"
-    }
-  )
+  tags = merge(var.common_tags, {
+    Name = "${var.project_name}-${var.short_names[count.index]}-ecr"
+    Tier = "Private"
+  })
 }
 
 #######################
