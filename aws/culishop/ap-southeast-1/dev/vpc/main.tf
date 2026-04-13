@@ -16,5 +16,7 @@ module "vpc" {
   data_subnets       = var.data_subnets
   availability_zones = var.availability_zones
 
+  common_tags = var.common_tags
+
   is_single_nat_gw = false # change to "true" if you want to use single NAT Gateway
 }
