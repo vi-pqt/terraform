@@ -1,20 +1,21 @@
-variable "project_name" {
+variable "project" {
   description = "Project name"
   type        = string
 }
 
-variable "stage" {
-  description = "Stage of the environment"
+variable "environment" {
+  description = "Environment name"
   type        = string
 }
 
-variable "namespace" {
-  description = "Service Connect namespace"
+variable "namespace_name" {
+  description = "Service Connect namespace name"
   type        = string
   default     = "culishop.local"
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
+variable "tags" {
+  description = "Additional tags"
   type        = map(string)
+  default     = {}
 }

@@ -1,83 +1,124 @@
-variable "is_deployment_circuit_breaker_enable" {
-  type    = bool
-  default = true
+variable "project" {
+  type = string
 }
 
-variable "is_deployment_circuit_breaker_rollback" {
-  type    = bool
-  default = true
-}
-
-variable "deployment_controller_type" {
-  description = "The type of deployment controller to use for the service. Eg: ECS, CODE_DEPLOY, EXTERNAL"
-  type        = string
-  default     = "ECS"
-}
-
-variable "project_name" {
-  type        = string
-  description = "The name of the project"
-}
-
-variable "stage" {
-  type        = string
-  description = "The stage name"
+variable "environment" {
+  type = string
 }
 
 variable "service_name" {
+  description = "Name of the microservice"
   type        = string
-  description = "The list of service names"
 }
 
-variable "ecs_cluster_id" {
+variable "cluster_id" {
+  description = "ECS cluster ID"
   type        = string
-  description = "The ID of the ECS cluster"
+}
+
+variable "image" {
+  description = "Docker image URI (ECR URL:tag)"
+  type        = string
+}
+
+variable "container_port" {
+  description = "Port the container listens on"
+  type        = number
+}
+
+variable "cpu" {
+  description = "Task CPU units (256, 512, 1024, etc.)"
+  type        = number
+  default     = 256
+}
+
+variable "memory" {
+  description = "Task memory in MiB"
+  type        = number
+  default     = 512
 }
 
 variable "desired_count" {
+  description = "Number of task instances"
   type        = number
-  description = "The desired count of tasks"
   default     = 1
 }
 
-variable "task_role_arn" {
-  type        = string
-  description = "The ARN of the task role"
+variable "environment_variables" {
+  description = "Map of environment variables"
+  type        = map(string)
+  default     = {}
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs for the tasks"
+  type        = list(string)
+}
+
+variable "security_group_ids" {
+  description = "Security group IDs for the tasks"
+  type        = list(string)
 }
 
 variable "task_execution_role_arn" {
+  description = "ECS task execution role ARN"
   type        = string
-  description = "The ARN of the task execution role"
 }
 
-variable "private_subnets" {
-  type        = list(string)
-  description = "The list of private subnets"
+variable "task_role_arn" {
+  description = "ECS task role ARN"
+  type        = string
 }
 
-variable "private_sg" {
-  type        = list(string)
-  description = "The list of private security groups"
+variable "service_connect_enabled" {
+  description = "Enable Service Connect"
+  type        = bool
+  default     = true
 }
 
-variable "assign_public_ip" {
-  type    = bool
-  default = false
-}
-
-variable "container_ports" {
-  type = map(number)
-  default = {
-    apiservice = 80
+variable "service_connect_role" {
+  description = "Service Connect role: 'client' (external), 'client_server' (internal)"
+  type        = string
+  default     = "client_server"
+  validation {
+    condition     = contains(["client", "client_server"], var.service_connect_role)
+    error_message = "Must be 'client' or 'client_server'"
   }
 }
 
-variable "ecr_url" {
-  type        = list(string)
-  description = "The URL of the ECR"
+variable "namespace_arn" {
+  description = "Service Connect namespace ARN"
+  type        = string
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
+variable "namespace_name" {
+  description = "Service Connect namespace DNS name (e.g. culishop.local)"
+  type        = string
+  default     = "culishop.local"
+}
+
+variable "assign_public_ip" {
+  description = "Assign public IP to tasks"
+  type        = bool
+  default     = false
+}
+
+variable "health_check_command" {
+  description = "Container health check command (optional)"
+  type        = list(string)
+  default     = null
+}
+
+variable "load_balancer" {
+  description = "Optional load balancer configuration"
+  type = object({
+    target_group_arn = string
+    container_port   = number
+  })
+  default = null
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
 }

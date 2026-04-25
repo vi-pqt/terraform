@@ -1,20 +1,16 @@
-#######################
-# Service Connect
-#######################
 resource "aws_service_discovery_http_namespace" "this" {
-  name        = var.namespace
-  description = "${var.project_name}-${var.stage} Service Connect namespace"
+  name        = var.namespace_name
+  description = "${var.project} ${var.environment} Service Connect namespace"
 
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.stage}-service-connect"
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   })
 }
 
-#######################
-# ECS Cluster
-#######################
-resource "aws_ecs_cluster" "ecs_cluster" {
-  name = "${var.project_name}-${var.stage}-cluster"
+resource "aws_ecs_cluster" "this" {
+  name = "${var.project}-${var.environment}"
 
   setting {
     name  = "containerInsights"
@@ -25,14 +21,15 @@ resource "aws_ecs_cluster" "ecs_cluster" {
     namespace = aws_service_discovery_http_namespace.this.arn
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.stage}-cluster"
-    Tier = "Private"
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   })
 }
 
 resource "aws_ecs_cluster_capacity_providers" "this" {
-  cluster_name       = aws_ecs_cluster.ecs_cluster.name
+  cluster_name       = aws_ecs_cluster.this.name
   capacity_providers = ["FARGATE", "FARGATE_SPOT"]
 
   default_capacity_provider_strategy {
@@ -40,17 +37,4 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
     weight            = 1
     base              = 0
   }
-}
-
-#######################
-# ECS CloudWatch Log Group
-#######################
-resource "aws_cloudwatch_log_group" "ecs_cluster_log_group" {
-  name              = "/ecs/${var.project_name}-${var.stage}-cluster"
-  retention_in_days = 30
-
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.stage}-ecs-cluster-log-group"
-    Tier = "Private"
-  })
 }

@@ -1,77 +1,138 @@
-#######################
-# ECS Service
-#######################
-resource "aws_ecs_service" "ecs_services" {
-  name = "${var.project_name}-${var.service_name}"
+locals {
+  full_name = "${var.project}-${var.environment}-${var.service_name}"
+  log_group = "/ecs/${var.project}/${var.environment}/${var.service_name}"
 
-  cluster                           = var.ecs_cluster_id
-  health_check_grace_period_seconds = 90
-  launch_type                       = "FARGATE"
-  task_definition                   = aws_ecs_task_definition.ecs_taskdef.arn
-  desired_count                     = var.desired_count
+  env_list = [for k, v in var.environment_variables : {
+    name  = k
+    value = v
+  }]
 
-  network_configuration {
-    subnets          = var.private_subnets
-    security_groups  = var.private_sg
-    assign_public_ip = var.assign_public_ip
+  container_definition = {
+    name      = var.service_name
+    image     = var.image
+    cpu       = var.cpu
+    memory    = var.memory
+    essential = true
+
+    portMappings = [{
+      containerPort = var.container_port
+      hostPort      = var.container_port
+      protocol      = "tcp"
+      name          = var.service_name
+    }]
+
+    environment = local.env_list
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = local.log_group
+        "awslogs-region"        = data.aws_region.current.id
+        "awslogs-stream-prefix" = var.service_name
+      }
+    }
+
+    healthCheck = var.health_check_command != null ? {
+      command     = var.health_check_command
+      interval    = 30
+      timeout     = 5
+      retries     = 3
+      startPeriod = 60
+    } : null
   }
+}
 
-  deployment_controller {
-    type = var.deployment_controller_type
-  }
+data "aws_region" "current" {}
 
-  deployment_circuit_breaker {
-    enable   = var.is_deployment_circuit_breaker_enable
-    rollback = var.is_deployment_circuit_breaker_rollback
-  }
+resource "aws_cloudwatch_log_group" "this" {
+  name              = local.log_group
+  retention_in_days = 7
 
-  lifecycle {
-    ignore_changes = [
-      desired_count,
-      task_definition,
-      health_check_grace_period_seconds
-    ]
-  }
-
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.stage}-${var.service_name}"
-    Tier = "Private"
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    Service     = var.service_name
+    ManagedBy   = "Terraform"
   })
 }
 
-resource "aws_ecs_task_definition" "ecs_taskdef" {
-  family                   = "${var.project_name}-${var.service_name}"
-  requires_compatibilities = ["FARGATE"]
+resource "aws_ecs_task_definition" "this" {
+  family                   = local.full_name
   network_mode             = "awsvpc"
-  cpu                      = "256"
-  memory                   = "512"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.cpu
+  memory                   = var.memory
   execution_role_arn       = var.task_execution_role_arn
   task_role_arn            = var.task_role_arn
 
-  container_definitions = jsonencode([
-    {
-      "name" : "${var.project_name}-${var.service_name}",
-      "image" : "${var.ecr_url}/${var.project_name}/${var.service_name}:${var.stage}",
-      "cpu" : 256,
-      "memory" : 512,
-      "essential" : true,
-      "portMappings" : [
-        {
-          "containerPort" : keys(var.container_ports) == var.service_name ? values(var.container_ports) : 80,
-          "hostPort" : keys(var.container_ports) == var.service_name ? values(var.container_ports) : 80
-        }
-      ],
-      "environment" : [
-        {
-          "name" : "CONTAINER_PORT",
-          "value" : keys(var.container_ports) == var.service_name ? tostring(values(var.container_ports)) : "80"
-        }
-      ]
-    }
-  ])
+  container_definitions = jsonencode([local.container_definition])
 
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.stage}-${var.service_name}-taskdef"
-    Tier = "Private"
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    Service     = var.service_name
+    ManagedBy   = "Terraform"
   })
+}
+
+resource "aws_ecs_service" "this" {
+  name            = var.service_name
+  cluster         = var.cluster_id
+  task_definition = aws_ecs_task_definition.this.arn
+  desired_count   = var.desired_count
+
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+    base              = 0
+  }
+
+  force_new_deployment = true
+
+  network_configuration {
+    subnets          = var.subnet_ids
+    security_groups  = var.security_group_ids
+    assign_public_ip = var.assign_public_ip
+  }
+
+  dynamic "load_balancer" {
+    for_each = var.load_balancer != null ? [var.load_balancer] : []
+    content {
+      target_group_arn = load_balancer.value.target_group_arn
+      container_name   = var.service_name
+      container_port   = load_balancer.value.container_port
+    }
+  }
+
+  dynamic "service_connect_configuration" {
+    for_each = var.service_connect_enabled ? [1] : []
+    content {
+      enabled   = true
+      namespace = var.namespace_arn
+
+      dynamic "service" {
+        for_each = var.service_connect_role == "client_server" ? [1] : []
+        content {
+          port_name      = var.service_name
+          discovery_name = var.service_name
+          client_alias {
+            port     = var.container_port
+            dns_name = "${var.service_name}.${var.namespace_name}"
+          }
+        }
+      }
+    }
+  }
+
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    Service     = var.service_name
+    ManagedBy   = "Terraform"
+  })
+
+  depends_on = [aws_cloudwatch_log_group.this]
 }

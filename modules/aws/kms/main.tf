@@ -23,15 +23,15 @@ resource "aws_kms_key" "this" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name        = "${var.project_name}-${var.environment}-sops"
-    Project     = var.project_name
+  tags = merge(var.tags, {
+    Name        = "${var.project}-${var.environment}-sops"
+    Project     = var.project
     Environment = var.environment
     ManagedBy   = "Terraform"
   })
 }
 
 resource "aws_kms_alias" "this" {
-  name          = "alias/${var.project_name}-${var.environment}-sops"
+  name          = "alias/${var.project}-${var.environment}-sops"
   target_key_id = aws_kms_key.this.key_id
 }

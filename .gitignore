@@ -1,3 +1,30 @@
 # Terraform
-.terraform
-.terraform.lock.hcl
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Local config (not for repo)
+.claude/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+docs/
+
+# Lambda build artifacts
+**/lambda/.zip/
+
+terraform.tfvars

@@ -1,21 +1,21 @@
 # Account & Region
 output "account_id" { value = local.account_id }
-output "region" { value = local.region }
+output "region"     { value = local.region }
 
 # VPC
-output "vpc_id" { value = local.vpc_id }
-output "vpc_cidr" { value = local.vpc_cidr_block }
+output "vpc_id"     { value = local.vpc_id }
+output "vpc_cidr"   { value = local.vpc_cidr }
 
 # Subnets
-output "public_subnets" { value = local.public_subnets }
-output "private_subnets" { value = local.private_subnets }
-output "data_subnets" { value = local.data_subnets }
+output "public_subnet_ids"      { value = local.public_subnet_ids }
+output "private_app_subnet_ids" { value = local.private_app_subnet_ids }
+output "private_data_subnet_ids" { value = local.private_data_subnet_ids }
 output "database_subnet_group_name" { value = local.database_subnet_group_name }
 
 # Security Groups
-output "alb_sg" { value = local.alb_sg }
-output "private_sg" { value = local.private_sg }
-output "data_sg" { value = local.data_sg }
+output "alb_security_group_id"  { value = local.alb_security_group_id }
+output "app_security_group_id"  { value = local.app_security_group_id }
+output "data_security_group_id" { value = local.data_security_group_id }
 
 # ECR
 output "ecr_registry" { value = local.ecr_registry }

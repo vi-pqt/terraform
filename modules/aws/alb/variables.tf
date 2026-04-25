@@ -1,75 +1,38 @@
-variable "project_name" {
-  type        = string
-  description = "Project name"
+variable "project" {
+  type = string
 }
 
-variable "stage" {
-  type        = string
-  description = "Stage name"
-}
-
-variable "is_enable_alb" {
-  type        = bool
-  description = "Enable or disable ALB"
-}
-
-variable "load_balancer_type" {
-  type        = string
-  description = "Load balancer type"
-
-  validation {
-    condition     = contains(["application", "network"], var.load_balancer_type)
-    error_message = "Load balancer type must be application or network"
-  }
-}
-
-variable "alb_sg_id" {
-  type        = string
-  description = "Security group ID for ALB"
-}
-
-variable "public_subnets" {
-  type        = list(string)
-  description = "List of public subnet IDs"
-
-  validation {
-    condition     = length(var.public_subnets) >= 3
-    error_message = "Public subnets must be at least 3"
-  }
-}
-
-variable "enable_deletion_protection" {
-  type        = bool
-  description = "Enable deletion protection"
+variable "environment" {
+  type = string
 }
 
 variable "vpc_id" {
+  description = "VPC ID for target groups"
   type        = string
-  description = "VPC ID"
 }
 
-variable "container_ports" {
-  type        = map(number)
-  description = "Map of container ports"
-}
-
-variable "short_names" {
+variable "subnet_ids" {
+  description = "Public subnet IDs for the ALB"
   type        = list(string)
-  description = "List of short names"
+}
+
+variable "security_group_id" {
+  description = "Security group ID for the ALB"
+  type        = string
 }
 
 variable "target_groups" {
+  description = "Map of target group configurations"
   type = map(object({
     port                 = number
     health_check_path    = string
-    priority             = number
-    path_patterns        = list(string)
     health_check_matcher = string
+    path_patterns        = list(string)
+    priority             = number
   }))
-  description = "Map of target groups"
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
-  type        = map(string)
+variable "default_target" {
+  description = "Key in target_groups to use as the default listener action"
+  type        = string
 }

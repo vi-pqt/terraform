@@ -1,0 +1,66 @@
+#!/bin/bash
+set -e
+
+# Install tools
+dnf install -y mariadb105
+
+# Create migration directory structure
+mkdir -p /home/ssm-user/db/migrations /home/ssm-user/db/seed
+
+# Write migration files
+cat > /home/ssm-user/db/migrations/001_create_products.sql << 'SQLEOF'
+${migration_001}
+SQLEOF
+
+cat > /home/ssm-user/db/migrations/002_create_orders.sql << 'SQLEOF'
+${migration_002}
+SQLEOF
+
+cat > /home/ssm-user/db/migrations/003_create_carts.sql << 'SQLEOF'
+${migration_003}
+SQLEOF
+
+cat > /home/ssm-user/db/seed/products.sql << 'SQLEOF'
+${seed_products}
+SQLEOF
+
+# Create migration runner script
+cat > /home/ssm-user/db/migrate.sh << 'BASHEOF'
+#!/bin/bash
+set -e
+
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+  echo "Usage: ./migrate.sh <aurora-writer-endpoint> <db-user> <db-password> [database]"
+  echo "Example: ./migrate.sh culishop-aurora-cluster.cluster-xxx.ap-southeast-1.rds.amazonaws.com culishop_admin 'MyPassword123!'"
+  exit 1
+fi
+
+ENDPOINT=$1
+DB_USER=$2
+DB_PASSWORD=$3
+DATABASE=$${4:-culishop}
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "=== Running migrations on $ENDPOINT ==="
+for f in "$SCRIPT_DIR"/migrations/*.sql; do
+  echo "Running migration: $(basename $f)"
+  mysql -h "$ENDPOINT" -u "$DB_USER" -p"$DB_PASSWORD" "$DATABASE" < "$f"
+done
+
+echo ""
+echo "=== Running seed data ==="
+for f in "$SCRIPT_DIR"/seed/*.sql; do
+  echo "Running seed: $(basename $f)"
+  mysql -h "$ENDPOINT" -u "$DB_USER" -p"$DB_PASSWORD" "$DATABASE" < "$f"
+done
+
+echo ""
+echo "=== Migration complete ==="
+mysql -h "$ENDPOINT" -u "$DB_USER" -p"$DB_PASSWORD" "$DATABASE" -e "SHOW TABLES;"
+BASHEOF
+
+chmod +x /home/ssm-user/db/migrate.sh
+chown -R ssm-user:ssm-user /home/ssm-user/db
+
+echo "Migration files ready at /home/ssm-user/db/"
+echo "Run: cd ~/db && ./migrate.sh <endpoint> <user> <password>"

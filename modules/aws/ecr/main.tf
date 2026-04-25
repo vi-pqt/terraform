@@ -1,57 +1,35 @@
-#######################
-# ECR Repository
-#######################
-resource "aws_ecr_repository" "ecr_repo" {
-  count = length(var.short_names)
-  name  = "${var.project_name}-${var.short_names[count.index]}"
+resource "aws_ecr_repository" "this" {
+  for_each = toset(var.repository_names)
 
-  image_tag_mutability = "IMMUTABLE"
-  force_delete         = var.force_delete
+  name                 = "${var.project}/${each.value}"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
-    scan_on_push = true
+    scan_on_push = false
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.project_name}-${var.short_names[count.index]}-ecr"
-    Tier = "Private"
+  tags = merge(var.tags, {
+    Project     = var.project
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   })
 }
 
-#######################
-# ECR Lifecycle Policy
-#######################
-resource "aws_ecr_lifecycle_policy" "ecr_lifecycle_policy" {
-  count      = length(var.short_names)
-  repository = aws_ecr_repository.ecr_repo[count.index].name
+resource "aws_ecr_lifecycle_policy" "this" {
+  for_each   = aws_ecr_repository.this
+  repository = each.value.name
 
-  policy = <<EOF
-{
-  "rules": [
-    {
-      "rulePriority": 1,
-      "description": "Delete untagged images after 1 day",
-      "selection": {
-        "tagStatus": "untagged",
-        "countType": "sinceImagePushed",
-        "countUnit": "days",
-        "countNumber": 1
-      },
-      "action": { "type": "expire" }
-    },
-    {
-      "rulePriority": 2,
-      "description": "Keep only last 10 images",
-      "selection": {
-        "tagStatus": "tagged",
-        "tagPrefixList": ["v"],
-        "countType": "imageCountMoreThan",
-        "countNumber": 10
-      },
-      "action": { "type": "expire" }
-    }
-  ]
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep last 5 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 5
+      }
+      action = { type = "expire" }
+    }]
+  })
 }
-EOF
-}
-

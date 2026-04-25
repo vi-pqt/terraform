@@ -1,4 +1,4 @@
-variable "project_name" {
+variable "project" {
   description = "Project name"
   type        = string
 }
@@ -14,8 +14,8 @@ variable "description" {
   default     = "KMS key for sops encryption"
 }
 
-variable "common_tags" {
-  description = "Common tags"
+variable "tags" {
+  description = "Additional tags"
   type        = map(string)
   default     = {}
 }

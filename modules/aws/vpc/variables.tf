@@ -1,45 +1,57 @@
-variable "vpc_cidr_block" {
-  description = "CIDR block for VPC"
+variable "project" {
+  description = "Project name used for naming and tagging"
   type        = string
 }
 
-variable "public_subnets" {
-  description = "List of public subnets"
-  type        = list(string)
+variable "environment" {
+  description = "Environment name (lab, dev, stg, prd)"
+  type        = string
 }
 
-variable "private_subnets" {
-  description = "List of private subnets"
-  type        = list(string)
+variable "region" {
+  description = "AWS region"
+  type        = string
 }
 
-variable "data_subnets" {
-  description = "List of data subnets"
-  type        = list(string)
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
 }
 
-variable "availability_zones" {
+variable "azs" {
   description = "List of availability zones"
   type        = list(string)
 }
 
-variable "project_name" {
-  description = "Project Name"
-  type        = string
+variable "public_subnets" {
+  description = "List of public subnet CIDR blocks"
+  type        = list(string)
 }
 
-variable "stage" {
-  description = "Stage of the environment"
-  type        = string
+variable "private_app_subnets" {
+  description = "List of private application subnet CIDR blocks"
+  type        = list(string)
 }
 
-variable "is_single_nat_gw" {
-  description = "Single NAT Gateway"
+variable "private_data_subnets" {
+  description = "List of private data subnet CIDR blocks"
+  type        = list(string)
+}
+
+variable "enable_nat_gateway" {
+  description = "Enable NAT Gateway (disable to save ~$32/mo when not in use)"
   type        = bool
-  default     = false
+  default     = true
 }
 
-variable "common_tags" {
-  description = "Common tags to apply to all resources"
+variable "single_nat_gateway" {
+  description = "Use a single NAT Gateway for all private subnets (cost optimization)"
+  type        = bool
+  default     = true
+}
+
+variable "tags" {
+  description = "Additional tags to apply to all resources"
   type        = map(string)
+  default     = {}
 }
